@@ -1,0 +1,45 @@
+To expose an endpoint from a kubernetes pod to the internet/ browser/ API on a Windows
+=========================================================================================
+kubectl expose deployment bff-app1 --type=LoadBalancer --port=8081
+kubectl get svc
+
+
+
+ kubectl patch svc bff-app1 -n default -p '{"spec": {"type": "LoadBalancer", "externalIPs":["10.244.0.8"]}}'
+
+
+kubectl exec -it bff-app1-8646d47cb-74484 -- sh
+
+
+watch docker ps
+
+
+To delete all evicted pods
+===========================
+kubectl get pods -A | grep default | awk '{print $2}' | xargs kubectl delete pod
+or
+kubectl get pods -A | grep Evicted | awk '{print $2}' | xargs kubectl delete pod
+If this throws error such as pod not found that means you have to provide the proper name space like this:
+	kubectl delete pod <pod_name> -n <name_space>
+
+kubectl create namespace mytestms
+
+
+
+To deploy on kubernetes
+===========================
+create Dockerfile
+create deploy/myservice.yaml file
+skaffold init --- > creates skaffold.yaml file with all configuration automatically
+skaffold run
+
+
+
+
+
+
+
+
+
+kubectl describe pod kindnet-gv2sb -n kube-system
+
