@@ -1,0 +1,52 @@
+To change password for postgres DB
+======================================
+  Syntax:  psql -c "ALTER USER postgres PASSWORD 'yourpwd';"
+
+  Eg:
+
+  psql -c "ALTER USER postgres PASSWORD 'postgres';"
+
+
+
+If you get any error such as this :
+====================================
+  rgupta4@ind-dvm0217:~$ psql -U postgres sdap < /home/rgupta4/db_files/infosightDB_06172020_transpectus_db_for_streaming_testing/restore.sql
+  psql: FATAL: Peer authentication failed for user "postgres"
+  The problem is your pg_hba.conf file (similar path as /etc/postgresql/9.1/main/pg_hba.conf*).
+
+  This line:
+
+  local   all             postgres                                peer
+  Should be:
+
+  local   all             postgres                                md5
+  * If you can't find this file, running locate pg_hba.conf should show you where the file is.
+
+  After altering this file, don't forget to restart your PostgreSQL server. If you're on Linux, that would be sudo service postgresql restart.
+
+
+To upgrade postgres version in docker compose file:
+======================================================
+  vim docker-compose_linux.yml --> go to the enviroment variables names ccs-pg
+  edit the highlighted portions in the following:
+    image: postgres:11.8
+
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD-mysecret}
+     volumes:
+          - "./data/postgresql_11_8/data:/var/lib/postgresql/data"
+	
+  Then run the following:
+    docker rm -f $(docker ps -a -q)
+    docker volume rm $(docker volume ls -q)
+
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+    
+    
+
+To add/delete an column with an array of string in postgres:
+===========================================================
+  ALTER TABLE volume_base_device_type_1 ADD COLUMN snaps text[];
+  ALTER TABLE volume_base_device_type_1 DROP COLUMN snaps;
