@@ -1,0 +1,81 @@
+For Cassandra installation and configuration, follow:
+=======================================================
+    https://phoenixnap.com/kb/install-cassandra-on-ubuntu
+
+    https://docs.datastax.com/en/ddac/doc/datastax_enterprise/operations/opsChangeIp.html
+
+
+
+Cassandra login
+=================
+
+cqlsh 15.112.66.119 9160  ----> default port is 9042 but I have configured native_transport_port as 9160
+login to Cassandra: cqlsh 15.112.66.119 9160
+
+
+
+To remove all entries from Cassandra keyspaces:
+=================================================================
+DESC KEYSPACE;
+DROP KEYSPACE akkatest;
+
+
+
+To configure cassandra
+===========================
+    Follow this page: https://phoenixnap.com/kb/install-cassandra-on-ubuntu
+
+    When editing to /etc/cassandra/cassandra.yaml using "sudo nano /etc/cassandra/cassandra.yaml", update these:
+
+    Cluster_name is set as "Test Cluster" by default   <<<<<<<< DON'T CHANGE IT
+    Replace IP address as DVM IP address in seeds, rpc_address, listen_address
+    If native_transport_port is changed from 9042 to 9160 then use the cqlsh with port number. Change this field only if you are facing issue like: 
+    rgupta4@ind-dvm0217:~$ cqlsh
+    Connection error: ('Unable to connect to any servers', {'127.0.0.1:9042': ConnectionRefusedError(111, "Tried connecting to [('127.0.0.1', 9042)]. Last error: Connection refused")})
+
+
+
+    After changing yaml file do the following in your DVM:
+
+    root@ind-dvm0217:~#  systemctl daemon-reload               <<<<<<<<<< sometimes restarting daemon helps if you are unable to login to cqlsh
+    root@ind-dvm0217:~#  sudo systemctl restart cassandra
+    root@ind-dvm0217:~#  sudo systemctl status cassandra
+    ● cassandra.service - LSB: distributed storage system for structured data
+    Loaded: loaded (/etc/init.d/cassandra; generated)
+    Active: active (running) since Thu 2021-05-13 07:53:42 EDT; 14s ago              <<<<<<<<<< it should show state as active(running)
+    Docs: man:systemd-sysv-generator(8)
+    Process: 30343 ExecStop=/etc/init.d/cassandra stop (code=exited, status=0/SUCCESS)
+    Process: 30350 ExecStart=/etc/init.d/cassandra start (code=exited, status=0/SUCCESS)
+    CGroup: /system.slice/cassandra.service
+    └─30442 java -ea -da:net.openhft... -XX:+UseThreadPriorities -XX:+HeapDumpOnOutOfMemoryError -Xss256k -XX:+AlwaysPreTouch -XX:-UseBiasedLocking -XX:+UseTLAB -XX:+ResizeTLAB -XX:+UseNUMA -XX:+PerfDisableSharedMem -Djava.net.preferIPv4Stack=true -XX:ThreadPriorityPolicy=42 -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled -XX:SurvivorRatio=8 -XX:MaxTenuringThreshold=1
+
+    May 13 07:53:42 ind-dvm0217.ind.simplivt.local systemd[1]: Starting LSB: distributed storage system for structured data...
+    May 13 07:53:42 ind-dvm0217.ind.simplivt.local systemd[1]: Started LSB: distributed storage system for structured data.
+
+
+
+    root@ind-dvm0217:~#  nodetool status
+    Datacenter: datacenter1
+    =======================
+    Status=Up/Down
+    |/ State=Normal/Leaving/Joining/Moving
+    -- Address Load Tokens Owns (effective) Host ID Rack
+    UN 15.112.66.119 145.33 KiB 16 100.0% 4bb6971b-a613-43f0-bd6d-20cd4aabbbe1 rack1
+
+
+
+    >>> If all status in nodetool status and sudo systemctl status cassandra looks good then login to cqlsh
+    root@ind-dvm0217:~# cqlsh 15.112.66.119 9160          <<<<<<<<<<<<< if native_transport_protocol is changed to 9160 then only mention port number
+    Connected to Test Cluster at 15.112.66.119:9160
+    [cqlsh 6.0.0 | Cassandra 4.0 | CQL spec 3.4.5 | Native protocol v5]
+    Use HELP for help.
+    cqlsh>
+
+
+
+To view the Cassandra logs incase any issue is faced
+========================================================
+    root@ind-dvm0217:~# cd /var/log/cassandra/
+    root@ind-dvm0217:/var/log/cassandra# ls
+    debug.log debug.log.2021-05-12.0.zip gc.log.0.current system.log system.log.2021-05-12.0.zip
+    root@ind-dvm0217:/var/log/cassandra# vi system.log
