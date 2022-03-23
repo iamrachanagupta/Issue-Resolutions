@@ -1,0 +1,57 @@
+Error ImagePullBackOff  :
+=======================
+	kubectl get pods -A   
+	        └── should show all the pods as running
+	In case one or more pod is not in running state and shows STATUS as ImagePullBackOff
+	    kubectl describe pod kindnet-v7c7g -n kube-system         
+	        ├── describe on that pod, here it is kindnet-gv2sb with namespace as kube-system
+	        └── find the image which is not getting pulled, here it is kindest/kindnetd:0.5.4
+	    docker pull kindest/kindnetd:0.5.4
+	        ├── if error appears as "You have reached your pull rate limit", do a docker login
+	        └── docker login 
+	             └── it will ask for username and password.
+					└── Username: rgupta04
+					         Password: Rachana2021
+	        └── again try to pull the image 
+	
+
+
+Error while "skaffold run" :
+===============================
+	 failed to build: couldn't build "mytestmsimage": docker build: Error response from daemon: Error processing tar file(exit status 1): open /skaffold.yaml: no space left on device
+Resolution: 
+	First check df -h
+			Filesystem                                                                                           Size  Used Avail Use% Mounted on
+			/dev/mapper/docker-253:0-538352717-ab9c73120d9dd01c3612f1b853bbdae670b487a6faad07b101d07bd4ac3dad76   10G  4.8G  5.3G  48% /
+			tmpfs                                                                                                 64M     0   64M   0% /dev
+			tmpfs                                                                                                 16G     0   16G   0% /sys/fs/cgroup
+			shm                                                                                                   64M     0   64M   0% /dev/shm
+			/dev/mapper/centos-root                                                            240G  240G   17M 100% /etc/kubernetes     <<<<<< Notice kubernetes has used up 100%
+			/dev/mapper/centos-home                                                         100G  2.0G   98G   2% /home/dev/repo
+			tmpfs                                                                                                 16G  8.1M   16G   1% /run
+			tmpfs                                                                                                5.0M     0  5.0M   0% /run/lock
+			
+		
+	Then  
+	Try either of these:
+	
+	1. $ docker system prune
+	2. Delete the orphaned volumes in Docker, you can use the built-in docker volume command. The built-in command also deletes any directory in /var/lib/docker/volumes that is not a volume so make sure you didn't put anything in there you want to save.
+	Warning be very careful with this if you have some data you want to keep
+	Cleanup:
+		$ docker volume rm $(docker volume ls -qf dangling=true)
+		Additional commands:
+		List dangling volumes:
+		$ docker volume ls -qf dangling=true
+		List all volumes:
+		$ docker volume ls
+	
+	Also consider removing all the unused Images.
+	First get rid of the <none> images (those are sometimes generated while building an image and if for any reason the image building was interrupted, they stay there).
+	here's a nice script I use to remove them
+	docker rmi $(docker images | grep '^<none>' | awk '{print $3}')
+	
+	From <https://stackoverflow.com/questions/30604846/docker-error-no-space-left-on-device> 
+	
+	
+	3. Rerun the k8s container (ccs-k8s)
